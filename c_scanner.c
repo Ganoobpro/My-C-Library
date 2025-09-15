@@ -10,7 +10,25 @@ typedef struct Scanner
 }
 Scanner;
 
+Scanner NewScanner(FILE* source) {
+  Scanner newScanner = (Scanner) {
+    .__source = source,
+    .hadError = false
+  };
+
+  return newScanner;
+}
+
+void ScannerClose(Scanner* scanner) {
+  int c;
+  while (
+    (c = fgetc(scanner->__source)) != '\n' &&
+    c != EOF
+  );
+}
+
 static void __Scanner_Error__(Scanner* scanner, const char* errorMessage) {
+  ScannerClose(scanner);
   fprintf(stderr, "[ERROR] Scanner: %s\n", errorMessage);
   scanner->hadError = true;
 }
@@ -67,33 +85,50 @@ bool ScannerNext(Scanner* scanner, char* stringInput, const uint64_t length) {
     }
   }
 
-  stringInput[length-1] = '\0';
-  return !(scanner->hadError);
+  __Scanner_Error__(scanner, "Input string is out of length!");
+  return false;
 }
 
-void ScannerClose(Scanner* scanner) {
-  int c;
-  while (
-    (c = fgetc(scanner->__source)) != '\n' &&
-    c != EOF
-  );
-}
+bool ScannerNextQuote(Scanner* scanner, char* stringInput, const uint64_t length) {
+  __Scanner_Skip_White_Space__(scanner);
+  
+  if (scanner->__current_char != '"')
+  {
+    __Scanner_Error__(scanner, "Expected string in quotation marks!");
+    return false;
+  }
 
-Scanner NewScanner(FILE* source) {
-  Scanner newScanner = (Scanner) {
-    .__source = source,
-    .hadError = false
-  };
+  stringInput[0] = '"';
+  for (size_t charIndex=1; charIndex < length-1; charIndex++) {
+    if (!(__Scanner_Advance__(scanner)))
+    {
+      if (!(scanner->hadError))
+        {__Scanner_Error__(scanner, "Expected \" at the end!");}
+      return false;
+    }
 
-  return newScanner;
+    stringInput[charIndex] = scanner->__current_char;
+
+    if (scanner->__current_char == '"')
+    {
+      stringInput[charIndex+1] = '\0';
+      return true;
+    }
+  }
+
+  __Scanner_Error__(scanner, "Input string is out of length!");
+  return false;
 }
 
 int main() {
-  char inputStr[5];
+  char inputStr[50];
   Scanner testScanner = NewScanner(stdin);
 
   printf("Type: ");
-  ScannerNext(&testScanner, inputStr, 5);
+  ScannerNext(&testScanner, inputStr, 50);
+  printf("You've type: %s\n", inputStr);
+  printf("Type string in quotation marks: ");
+  ScannerNextQuote(&testScanner, inputStr, 50);
   printf("You've type: %s\n", inputStr);
   ScannerClose(&testScanner);
 
