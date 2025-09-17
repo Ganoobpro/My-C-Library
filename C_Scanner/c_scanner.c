@@ -45,7 +45,7 @@ void ScannerClean(Scanner* scanner) {
   );
 }
 
-void ScannerNext(Scanner* scanner, char* stringInput, const uint64_t length) {
+bool ScannerNext(Scanner* scanner, char* stringInput, const uint64_t length) {
   __Scanner_Skip_White_Space__(scanner);
 
   for (size_t charIndex=0; charIndex < length-1; charIndex++) {
@@ -71,7 +71,7 @@ void ScannerNext(Scanner* scanner, char* stringInput, const uint64_t length) {
   return false;
 }
 
-void ScannerNextQuote(Scanner* scanner, char* stringInput, const uint64_t length) {
+bool ScannerNextQuote(Scanner* scanner, char* stringInput, const uint64_t length) {
   __Scanner_Skip_White_Space__(scanner);
   
   if (scanner->__current_char != '"')
